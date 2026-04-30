@@ -8,30 +8,25 @@
         body { margin: 0; padding: 0; background-color: #e0f7fa; font-family: 'Courier New', Courier, monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
         #game-container { width: 800px; height: 300px; background-color: #aed581; border-bottom: 20px solid #558b2f; position: relative; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         #score-board { position: absolute; top: 10px; right: 20px; font-size: 24px; color: #333; z-index: 10; }
-        #message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #333; z-index: 20; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; border: 2px solid #558b2f; width: 320px; }
-        button { padding: 10px 20px; font-size: 18px; cursor: pointer; background-color: #333; color: white; border: none; border-radius: 4px; margin-top: 10px; }
+        #message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #333; z-index: 20; background: rgba(255,255,255,0.9); padding: 25px; border-radius: 10px; border: 2px solid #558b2f; width: 400px; }
+        button { padding: 10px 20px; font-size: 18px; cursor: pointer; background-color: #333; color: white; border: none; border-radius: 4px; margin-top: 15px; }
 
-        /* CHARACTER BOX */
         #player {
             width: 100px; height: 100px; position: absolute; bottom: 0px; left: 50px;
             background-image: url('standing_1.png');
             background-repeat: no-repeat;
             background-size: contain; 
             background-position: center bottom;
-            background-color: #aed581; /* Matches fairway green */
+            background-color: #aed581; /* Matches background color */
             z-index: 5;
             transition: bottom 0.3s ease-out;
         }
 
-        /* DANGEROUS OBSTACLES */
         .obstacle { position: absolute; bottom: 0; z-index: 4; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-        
-        .finance-error { width: 100px; height: 40px; background: #ff5252; color: white; font-size: 11px; border-radius: 4px; text-align: center; border: 2px solid #b71c1c; box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
-        
+        .finance-error { width: 110px; height: 45px; background: #ff5252; color: white; font-size: 11px; border-radius: 4px; text-align: center; border: 2px solid #b71c1c; box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
         .golf-flag { width: 60px; height: 60px; font-size: 40px; }
         .golf-flag::after { content: '⛳'; }
         
-        /* HARMLESS DECORATIONS */
         .decoration { position: absolute; bottom: 0; opacity: 0.4; font-size: 24px; z-index: 1; pointer-events: none; }
     </style>
 </head>
@@ -41,7 +36,7 @@
         <div id="player"></div>
         <div id="message">
             <h2>Good luck on the new role, Ryan!</h2>
-            <p>Jump over the Bad Data & Flags.</p>
+            <p>Avoid the hazards & hit the green.</p>
             <button onclick="startGame()">Tee Off!</button>
         </div>
     </div>
@@ -100,7 +95,18 @@
         clearTimeout(decorTimer);
         player.style.backgroundImage = "url('standing_1.png')";
         
-        const failureMessages = ["Budget Overrun!", "Data Discrepancy!", "Out of Bounds!", "Missing Forecast!", "Audit Required!"];
+        // CUSTOM LIST MESSAGES
+        const failureMessages = [
+            "Data discrepancy!", 
+            "Out of Bounds!", 
+            "Missing Forecast!", 
+            "Switching to RVP Rev...", 
+            "Did someone say ISV Allocations?", 
+            "Triple Bogey!",
+            "Stuck in the Sand Trap!",
+            "Water Hazard!",
+            "Quotas are in!"
+        ];
         const randomMsg = failureMessages[Math.floor(Math.random() * failureMessages.length)];
         
         messageElement.innerHTML = `<h2>${randomMsg}</h2><p>Final Score: ${Math.floor(score/10)}</p><button onclick="startGame()">Try Another Round</button>`;
@@ -122,7 +128,6 @@
         const p = player.getBoundingClientRect();
         document.querySelectorAll('.obstacle').forEach(obs => {
             const o = obs.getBoundingClientRect();
-            // Collision detection
             if (p.right - 45 > o.left && p.left + 45 < o.right && p.bottom > o.top + 10) {
                 gameOver();
             }
@@ -137,7 +142,7 @@
         
         if(Math.random() > 0.5) {
             obstacle.classList.add('finance-error');
-            const financeTerms = ["DATA ERROR", "LATE REPORT", "RECON FAIL", "BAD FORM"];
+            const financeTerms = ["VLOOKUP ERROR", "FORMULA BROKE", "LATE ENTRY", "GAP ANALYSIS"];
             obstacle.innerText = financeTerms[Math.floor(Math.random() * financeTerms.length)];
         } else {
             obstacle.classList.add('golf-flag');
@@ -148,7 +153,6 @@
         obstacleTimer = setTimeout(scheduleObstacle, 1200 + Math.random() * 2000);
     }
 
-    // Harmless bushes and grass
     function scheduleDecoration() {
         if (isGameOver) return;
         const decor = document.createElement('div');
@@ -156,7 +160,6 @@
         const natureItems = ['🌳', '🌿', '🌱', '🍃'];
         decor.innerText = natureItems[Math.floor(Math.random() * natureItems.length)];
         decor.style.left = '850px';
-        // Placed slightly higher or lower for variety
         decor.style.bottom = (Math.random() * 15) + 'px';
         container.appendChild(decor);
         decorTimer = setTimeout(scheduleDecoration, 800 + Math.random() * 1500);
