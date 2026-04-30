@@ -8,33 +8,31 @@
         body { margin: 0; padding: 0; background-color: #e0f7fa; font-family: 'Courier New', Courier, monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
         #game-container { width: 800px; height: 300px; background-color: #aed581; border-bottom: 20px solid #558b2f; position: relative; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         #score-board { position: absolute; top: 10px; right: 20px; font-size: 24px; color: #333; z-index: 10; }
-        #message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #333; z-index: 20; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; border: 2px solid #558b2f; width: 300px; }
+        #message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #333; z-index: 20; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; border: 2px solid #558b2f; width: 320px; }
         button { padding: 10px 20px; font-size: 18px; cursor: pointer; background-color: #333; color: white; border: none; border-radius: 4px; margin-top: 10px; }
 
-        /* CHARACTER BOX - Blended with the green */
+        /* CHARACTER BOX */
         #player {
             width: 100px; height: 100px; position: absolute; bottom: 0px; left: 50px;
             background-image: url('standing_1.png');
             background-repeat: no-repeat;
             background-size: contain; 
             background-position: center bottom;
-            background-color: #aed581; /* Matches the fairway */
+            background-color: #aed581; /* Matches fairway green */
             z-index: 5;
             transition: bottom 0.3s ease-out;
         }
 
-        /* OBSTACLE STYLING */
+        /* DANGEROUS OBSTACLES */
         .obstacle { position: absolute; bottom: 0; z-index: 4; font-weight: bold; display: flex; align-items: center; justify-content: center; }
         
-        /* Finance Hazards */
-        .finance-error { width: 100px; height: 40px; background: #ff5252; color: white; font-size: 12px; border-radius: 4px; text-align: center; }
+        .finance-error { width: 100px; height: 40px; background: #ff5252; color: white; font-size: 11px; border-radius: 4px; text-align: center; border: 2px solid #b71c1c; box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
         
-        /* Golf Hazards */
         .golf-flag { width: 60px; height: 60px; font-size: 40px; }
         .golf-flag::after { content: '⛳'; }
         
-        /* Background Decor (Non-deadly Tees) */
-        .decoration { position: absolute; bottom: 0; opacity: 0.5; font-size: 20px; z-index: 1; }
+        /* HARMLESS DECORATIONS */
+        .decoration { position: absolute; bottom: 0; opacity: 0.4; font-size: 24px; z-index: 1; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -43,7 +41,7 @@
         <div id="player"></div>
         <div id="message">
             <h2>Good luck on the new role, Ryan!</h2>
-            <p>Avoid the bad data and flags!</p>
+            <p>Jump over the Bad Data & Flags.</p>
             <button onclick="startGame()">Tee Off!</button>
         </div>
     </div>
@@ -102,9 +100,8 @@
         clearTimeout(decorTimer);
         player.style.backgroundImage = "url('standing_1.png')";
         
-        // Fun theme-based game over messages
-        const insults = ["Budget Overrun!", "Data Discrepancy!", "Out of Bounds!", "Missing Forecast!"];
-        const randomMsg = insults[Math.floor(Math.random() * insults.length)];
+        const failureMessages = ["Budget Overrun!", "Data Discrepancy!", "Out of Bounds!", "Missing Forecast!", "Audit Required!"];
+        const randomMsg = failureMessages[Math.floor(Math.random() * failureMessages.length)];
         
         messageElement.innerHTML = `<h2>${randomMsg}</h2><p>Final Score: ${Math.floor(score/10)}</p><button onclick="startGame()">Try Another Round</button>`;
         messageElement.style.display = 'block';
@@ -117,15 +114,15 @@
         gameSpeed += 0.001;
         
         document.querySelectorAll('.obstacle, .decoration').forEach(el => {
-            let currentLeft = parseInt(el.style.left);
+            let currentLeft = parseFloat(el.style.left);
             el.style.left = (currentLeft - gameSpeed) + 'px';
-            if (currentLeft < -100) el.remove();
+            if (currentLeft < -150) el.remove();
         });
 
         const p = player.getBoundingClientRect();
         document.querySelectorAll('.obstacle').forEach(obs => {
             const o = obs.getBoundingClientRect();
-            // Collision tuning
+            // Collision detection
             if (p.right - 45 > o.left && p.left + 45 < o.right && p.bottom > o.top + 10) {
                 gameOver();
             }
@@ -140,7 +137,8 @@
         
         if(Math.random() > 0.5) {
             obstacle.classList.add('finance-error');
-            obstacle.innerText = Math.random() > 0.5 ? "DATA ERROR" : "LATE REPORT";
+            const financeTerms = ["DATA ERROR", "LATE REPORT", "RECON FAIL", "BAD FORM"];
+            obstacle.innerText = financeTerms[Math.floor(Math.random() * financeTerms.length)];
         } else {
             obstacle.classList.add('golf-flag');
         }
@@ -150,16 +148,18 @@
         obstacleTimer = setTimeout(scheduleObstacle, 1200 + Math.random() * 2000);
     }
 
-    // Purely visual golf tees/grass to make it feel more like a course
+    // Harmless bushes and grass
     function scheduleDecoration() {
         if (isGameOver) return;
         const decor = document.createElement('div');
         decor.classList.add('decoration');
-        decor.innerText = '📍'; // Looks like a golf tee
+        const natureItems = ['🌳', '🌿', '🌱', '🍃'];
+        decor.innerText = natureItems[Math.floor(Math.random() * natureItems.length)];
         decor.style.left = '850px';
-        decor.style.bottom = (Math.random() * 20) + 'px';
+        // Placed slightly higher or lower for variety
+        decor.style.bottom = (Math.random() * 15) + 'px';
         container.appendChild(decor);
-        decorTimer = setTimeout(scheduleDecoration, 500 + Math.random() * 1000);
+        decorTimer = setTimeout(scheduleDecoration, 800 + Math.random() * 1500);
     }
 </script>
 </body>
