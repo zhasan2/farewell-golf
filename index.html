@@ -5,42 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Goodbye Golf Run!</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #e0f7fa; font-family: 'Courier New', Courier, monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-container { width: 800px; height: 300px; background-color: #aed581; border-bottom: 20px solid #558b2f; position: relative; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        #score-board { position: absolute; top: 10px; right: 20px; font-size: 24px; color: #333; z-index: 10; }
-        #message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #333; z-index: 20; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; border: 2px solid #558b2f; }
-        button { padding: 10px 20px; font-size: 18px; cursor: pointer; background-color: #333; color: white; border: none; border-radius: 4px; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: #e0f7fa; 
+            font-family: 'Courier New', Courier, monospace; 
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+        }
+        #game-container { 
+            width: 800px; 
+            height: 300px; 
+            background-color: #aed581; 
+            border-bottom: 20px solid #558b2f; 
+            position: relative; 
+            overflow: hidden; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        }
+        #score-board { 
+            position: absolute; 
+            top: 10px; 
+            right: 20px; 
+            font-size: 24px; 
+            color: #333; 
+            z-index: 10; 
+        }
+        #message { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            text-align: center; 
+            color: #333; 
+            z-index: 20; 
+            background: rgba(255,255,255,0.9); 
+            padding: 20px; 
+            border-radius: 10px; 
+            border: 2px solid #558b2f; 
+        }
+        button { 
+            padding: 10px 20px; 
+            font-size: 18px; 
+            cursor: pointer; 
+            background-color: #333; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+        }
 
-        /* THE FINAL FIX: Adjusted for the golf club width */
+        /* THE CHARACTER BOX */
         #player {
-            width: 120px; /* Increased width to fit the golf clubs */
-            height: 100px; /* Increased height to fit full body and club */
+            width: 100px; 
+            height: 100px; 
             position: absolute; 
             bottom: 0px; 
             left: 50px;
-            background-image: url('character.png');
+            background-image: url('standing_1.png');
             background-repeat: no-repeat;
-            background-color: transparent; /* Now that your PNG is transparent! */
-            
-            /* 3 columns wide (300%), 2 rows tall (200%) */
-            background-size: 300% 200%; 
-            
+            background-size: contain; 
+            background-position: center bottom;
+            background-color: transparent; 
             z-index: 5;
             transition: bottom 0.3s ease-out;
-            animation: runCycle 0.4s steps(1) infinite;
-        }
-
-        /* JUMP POSE: The bottom sprite (0% left, 100% top) */
-        #player.jumping-pose {
-            animation: none;
-            background-position: 0% 100%; 
-        }
-
-        /* RUN CYCLE: Centering the two running frames */
-        @keyframes runCycle {
-            0% { background-position: 50% 0%; }   /* Middle character */
-            50% { background-position: 100% 0%; }  /* Far right character */
-            100% { background-position: 50% 0%; }
         }
 
         .obstacle { position: absolute; bottom: 0; z-index: 4; }
@@ -65,15 +95,35 @@
     const container = document.getElementById('game-container');
     const scoreElement = document.getElementById('score');
     const messageElement = document.getElementById('message');
-    let score = 0, isGameOver = true, isJumping = false, gameSpeed = 6, gameLoopInterval, obstacleTimer;
+    
+    let score = 0, isGameOver = true, isJumping = false, gameSpeed = 6;
+    let gameLoopInterval, obstacleTimer, animInterval;
+    let runFrame = 1;
 
     document.addEventListener('keydown', (e) => { if (e.code === 'Space') jump(); });
     container.addEventListener('mousedown', jump);
 
+    // This handles swapping the images to create the animation[cite: 2]
+    function updateAnimation() {
+        if (isGameOver) {
+            player.style.backgroundImage = "url('standing_1.png')";
+            return;
+        }
+        
+        if (isJumping) {
+            player.style.backgroundImage = "url('jump_1.png')";
+        } else {
+            // Alternates between the standing pose and running pose[cite: 2]
+            runFrame = (runFrame === 1) ? 2 : 1;
+            const currentImg = (runFrame === 1) ? 'running_1.png' : 'standing_1.png';
+            player.style.backgroundImage = `url('${currentImg}')`;
+        }
+    }
+
     function jump() {
         if (isGameOver || isJumping) return;
         isJumping = true;
-        player.classList.add('jumping-pose');
+        updateAnimation(); 
         player.style.bottom = "150px"; 
 
         setTimeout(() => {
@@ -82,9 +132,9 @@
         }, 350);
 
         setTimeout(() => {
-            player.classList.remove('jumping-pose');
             player.style.transition = "bottom 0.3s ease-out";
             isJumping = false;
+            updateAnimation(); 
         }, 600);
     }
 
@@ -92,6 +142,11 @@
         if (!isGameOver) return;
         score = 0; gameSpeed = 6; isGameOver = false;
         messageElement.style.display = 'none';
+        
+        // Feet start shuffling[cite: 2]
+        clearInterval(animInterval);
+        animInterval = setInterval(updateAnimation, 150);
+
         document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
         gameLoop();
         scheduleObstacle();
@@ -99,6 +154,8 @@
 
     function gameOver() {
         isGameOver = true;
+        clearInterval(animInterval);
+        player.style.backgroundImage = "url('standing_1.png')";
         cancelAnimationFrame(gameLoopInterval);
         clearTimeout(obstacleTimer);
         messageElement.innerHTML = `<h2>GAME OVER</h2><p>Final Score: ${Math.floor(score/10)}</p><button onclick="startGame()">Play Again</button>`;
@@ -120,7 +177,8 @@
         const p = player.getBoundingClientRect();
         document.querySelectorAll('.obstacle').forEach(obs => {
             const o = obs.getBoundingClientRect();
-            if (p.right - 25 > o.left && p.left + 25 < o.right && p.bottom > o.top + 10) {
+            // Narrowed collision detection for the wider character[cite: 2]
+            if (p.right - 45 > o.left && p.left + 45 < o.right && p.bottom > o.top + 10) {
                 gameOver();
             }
         });
