@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goodbye Golf Run!</title>
+    <style>
+        /* CSS: Basic page styling and game layout */
+        body { margin: 0; padding: 0; background-color: #e0f7fa; font-family: 'Courier New', Courier, monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #game-container { width: 800px; height: 250px; background-color: #aed581; border-bottom: 15px solid #558b2f; /* The Green */ position: relative; overflow: hidden; /* Hide obstacles outside the view */ border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        #score-board { position: absolute; top: 10px; right: 20px; font-size: 24px; color: #333; z-index: 10; }
+        #message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #333; z-index: 20; }
+        button { padding: 10px 20px; font-size: 18px; cursor: pointer; background-color: #333; color: white; border: none; border-radius: 4px; }
+
+        /* Character Sprite (The Cartoon Coworker) */
+        #player {
+            width: 44px; height: 48px; /* Dimensions of one sprite frame */
+            position: absolute; bottom: 0px; left: 50px;
+            background-image: url('character.png'); /* The sprite sheet */
+            background-repeat: no-repeat;
+            z-index: 5;
+            /* Animation state (running default) */
+            animation: runCycle 0.5s steps(2) infinite;
+        }
+
+        /* The jump class added/removed by JS */
+        #player.jumping {
+            animation: none; /* Stop running */
+            background-position: -88px 0px; /* Use frame 3: the jump pose */
+            bottom: 100px; /* The jump height */
+            transition: bottom 0.3s ease-out; /* Smooth ascent */
+        }
+        #player.falling {
+            transition: bottom 0.2s ease-in; /* Faster descent */
+        }
+
+        /* Keyframes for simple run animation (switching frame 1 and 2) */
+        @keyframes runCycle {
+            0% { background-position: 0px 0px; }
+            100% { background-position: -44px 0px; }
+        }
+
+        /* Obstacles (Sand Traps and Carts) */
+        .obstacle { position: absolute; bottom: 0; z-index: 4; }
+        .sand-trap { width: 40px; height: 20px; background-color: #ffe082; border-radius: 50%; border: 2px solid #dca; }
+        .golf-cart { width: 50px; height: 40px; background-color: #555; border-radius: 4px; position: relative; }
+        .golf-cart::after { content: '🛒'; font-size: 24px; position: absolute; top: 5px; left: 10px;}
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="score-board">Score: <span id="score">0</span></div>
+        <div id="player"></div>
+        <div id="message">
+            <h2>Good luck on the new team!</h2>
+            <p>Press [SPACE] or Tap to Jump.</p>
+            <button onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
+<script>
+    // JAVASCRIPT: The game logic
+    const player = document.getElementById('player');
+    const container = document.getElementById('game-container');
+    const scoreElement = document.getElementById('score');
+    const messageElement = document.getElementById('message');
+    let score = 0;
+    let isGameOver = true;
+    let isJumping = false;
+    let gameSpeed = 5; // Pixels per frame
+    let obstacleTimer;
+    let gameLoopInterval;
+
+    // Controls: Jump on Spacebar or Click/Tap
+    document.addEventListener('keydown', (e) => { if (e.code === 'Space') { jump(); } });
+    container.addEventListener('touchstart', jump); // Mobile touch
+    container.addEventListener('mousedown', jump);   // Mouse click
+
+    function jump() {
+        if (isGameOver || isJumping) return;
+        isJumping = true;
+        player.classList.add('jumping');
+
+        // Ascent (0.3s defined in CSS transition)
+        setTimeout(() => {
+            player.classList.remove('jumping');
+            player.classList.add('falling'); // Smooth descent
+            player.style.bottom = '0px'; 
+        }, 300);
+
+        // Reset state after descent (0.2s falling transition)
+        setTimeout(() => {
+            player.classList.remove('falling');
+            isJumping = false;
+        }, 500); // 300 + 200 = 500ms total
+    }
+
+    function startGame() {
+        if (!isGameOver) return;
+        score = 0;
+        gameSpeed = 5;
+        scoreElement.innerText = score;
+        isGameOver = false;
+        messageElement.style.display = 'none';
+        
+        // Remove old obstacles
+        document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+        
+        gameLoop();
+        scheduleObstacle();
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        clearInterval(gameLoopInterval);
+        clearTimeout(obstacleTimer);
+        messageElement.innerHTML = `<h2>GAME OVER</h2><p>Your Score: ${score}</p><p>The standard 'par' farewell.</p><button onclick="startGame()">Try Again</button>`;
+        messageElement.style.display = 'block';
+    }
+
+    function gameLoop() {
+        if (isGameOver) return;
+        
+        // Move background/ground simulation (subtle)
+        score++;
+        scoreElement.innerText = Math.floor(score / 10);
+        
+        // Slightly increase speed over time
+        gameSpeed += 0.001; 
+
+        moveObstacles();
+        checkCollision();
+        
+        // Standard game loop timing (60fps approximately)
+        gameLoopInterval = requestAnimationFrame(gameLoop);
+    }
+
+    function createObstacle() {
+        if (isGameOver) return;
+        const obstacle = document.createElement('div');
+        obstacle.classList.add('obstacle');
+        
+        // 50% chance of sand trap or golf cart
+        if (Math.random() > 0.5) {
+            obstacle.classList.add('sand-trap');
+        } else {
+            obstacle.classList.add('golf-cart');
+        }
+
+        obstacle.style.left = '800px'; // Start off-screen right
+        container.appendChild(obstacle);
+    }
+
+    function moveObstacles() {
+        const obstacles = document.querySelectorAll('.obstacle');
+        obstacles.forEach(obstacle => {
+            let currentLeft = parseInt(obstacle.style.left);
+            obstacle.style.left = (currentLeft - gameSpeed) + 'px';
+
+            // Remove obstacles that go off-screen left
+            if (currentLeft < -60) {
+                obstacle.remove();
+            }
+        });
+    }
+
+    function scheduleObstacle() {
+        if (isGameOver) return;
+        createObstacle();
+        
+        // Randomize the next obstacle time (1.5 to 3.5 seconds)
+        let nextTime = 1500 + Math.random() * 2000;
+        obstacleTimer = setTimeout(scheduleObstacle, nextTime);
+    }
+
+    function checkCollision() {
+        const playerRect = player.getBoundingClientRect();
+        const obstacles = document.querySelectorAll('.obstacle');
+        
+        obstacles.forEach(obstacle => {
+            const obstacleRect = obstacle.getBoundingClientRect();
+            
+            // Basic AABB collision with a little 'forgiveness' padding
+            if (
+                playerRect.right - 10 > obstacleRect.left &&
+                playerRect.left + 10 < obstacleRect.right &&
+                playerRect.bottom > obstacleRect.top + 5 &&
+                playerRect.top < obstacleRect.bottom
+            ) {
+                // Check if we are actively "jumping" (which CSS controls via bottom position)
+                // If we aren't at the peak of the jump, we hit it.
+                if(!player.classList.contains('jumping') || parseInt(player.style.bottom) < 30) {
+                    gameOver();
+                }
+            }
+        });
+    }
+
+</script>
+</body>
+</html>
