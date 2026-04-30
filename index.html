@@ -3,80 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goodbye Golf Run!</title>
+    <title>Ryan's Finance Fairway!</title>
     <style>
-        body { 
-            margin: 0; 
-            padding: 0; 
-            background-color: #e0f7fa; 
-            font-family: 'Courier New', Courier, monospace; 
-            overflow: hidden; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-        }
-        #game-container { 
-            width: 800px; 
-            height: 300px; 
-            background-color: #aed581; 
-            border-bottom: 20px solid #558b2f; 
-            position: relative; 
-            overflow: hidden; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
-        }
-        #score-board { 
-            position: absolute; 
-            top: 10px; 
-            right: 20px; 
-            font-size: 24px; 
-            color: #333; 
-            z-index: 10; 
-        }
-        #message { 
-            position: absolute; 
-            top: 50%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            text-align: center; 
-            color: #333; 
-            z-index: 20; 
-            background: rgba(255,255,255,0.9); 
-            padding: 20px; 
-            border-radius: 10px; 
-            border: 2px solid #558b2f; 
-        }
-        button { 
-            padding: 10px 20px; 
-            font-size: 18px; 
-            cursor: pointer; 
-            background-color: #333; 
-            color: white; 
-            border: none; 
-            border-radius: 4px; 
-        }
+        body { margin: 0; padding: 0; background-color: #e0f7fa; font-family: 'Courier New', Courier, monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #game-container { width: 800px; height: 300px; background-color: #aed581; border-bottom: 20px solid #558b2f; position: relative; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        #score-board { position: absolute; top: 10px; right: 20px; font-size: 24px; color: #333; z-index: 10; }
+        #message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #333; z-index: 20; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; border: 2px solid #558b2f; width: 300px; }
+        button { padding: 10px 20px; font-size: 18px; cursor: pointer; background-color: #333; color: white; border: none; border-radius: 4px; margin-top: 10px; }
 
-        /* THE CHARACTER BOX */
+        /* CHARACTER BOX - Blended with the green */
         #player {
-            width: 100px; 
-            height: 100px; 
-            position: absolute; 
-            bottom: 0px; 
-            left: 50px;
+            width: 100px; height: 100px; position: absolute; bottom: 0px; left: 50px;
             background-image: url('standing_1.png');
             background-repeat: no-repeat;
             background-size: contain; 
             background-position: center bottom;
-            background-color: #aed581; 
+            background-color: #aed581; /* Matches the fairway */
             z-index: 5;
             transition: bottom 0.3s ease-out;
         }
 
-        .obstacle { position: absolute; bottom: 0; z-index: 4; }
-        .sand-trap { width: 60px; height: 30px; background-color: #ffe082; border-radius: 50%; border: 2px solid #dca; }
-        .golf-cart { width: 60px; height: 60px; font-size: 40px; display: flex; align-items: center; justify-content: center;}
-        .golf-cart::after { content: '🛒'; }
+        /* OBSTACLE STYLING */
+        .obstacle { position: absolute; bottom: 0; z-index: 4; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        
+        /* Finance Hazards */
+        .finance-error { width: 100px; height: 40px; background: #ff5252; color: white; font-size: 12px; border-radius: 4px; text-align: center; }
+        
+        /* Golf Hazards */
+        .golf-flag { width: 60px; height: 60px; font-size: 40px; }
+        .golf-flag::after { content: '⛳'; }
+        
+        /* Background Decor (Non-deadly Tees) */
+        .decoration { position: absolute; bottom: 0; opacity: 0.5; font-size: 20px; z-index: 1; }
     </style>
 </head>
 <body>
@@ -84,9 +42,9 @@
         <div id="score-board">Score: <span id="score">0</span></div>
         <div id="player"></div>
         <div id="message">
-            <h2>Good luck on the new team!</h2>
-            <p>Press [SPACE] or Click to Jump.</p>
-            <button onclick="startGame()">Start Game</button>
+            <h2>Good luck on the new role, Ryan!</h2>
+            <p>Avoid the bad data and flags!</p>
+            <button onclick="startGame()">Tee Off!</button>
         </div>
     </div>
 
@@ -97,68 +55,58 @@
     const messageElement = document.getElementById('message');
     
     let score = 0, isGameOver = true, isJumping = false, gameSpeed = 6;
-    let gameLoopInterval, obstacleTimer, animInterval;
+    let gameLoopInterval, obstacleTimer, animInterval, decorTimer;
     let runFrame = 1;
 
     document.addEventListener('keydown', (e) => { if (e.code === 'Space') jump(); });
     container.addEventListener('mousedown', jump);
 
-    // This handles swapping the images to create the animation[cite: 2]
     function updateAnimation() {
         if (isGameOver) {
             player.style.backgroundImage = "url('standing_1.png')";
             return;
         }
-        
         if (isJumping) {
             player.style.backgroundImage = "url('jump_1.png')";
         } else {
-            // Alternates between the standing pose and running pose[cite: 2]
             runFrame = (runFrame === 1) ? 2 : 1;
-            const currentImg = (runFrame === 1) ? 'running_1.png' : 'standing_1.png';
-            player.style.backgroundImage = `url('${currentImg}')`;
+            player.style.backgroundImage = (runFrame === 1) ? "url('running_1.png')" : "url('standing_1.png')";
         }
     }
 
     function jump() {
         if (isGameOver || isJumping) return;
         isJumping = true;
-        updateAnimation(); 
+        updateAnimation();
         player.style.bottom = "150px"; 
-
-        setTimeout(() => {
-            player.style.transition = "bottom 0.25s ease-in";
-            player.style.bottom = "0px"; 
-        }, 350);
-
-        setTimeout(() => {
-            player.style.transition = "bottom 0.3s ease-out";
-            isJumping = false;
-            updateAnimation(); 
-        }, 600);
+        setTimeout(() => { player.style.transition = "bottom 0.25s ease-in"; player.style.bottom = "0px"; }, 350);
+        setTimeout(() => { player.style.transition = "bottom 0.3s ease-out"; isJumping = false; updateAnimation(); }, 600);
     }
 
     function startGame() {
         if (!isGameOver) return;
         score = 0; gameSpeed = 6; isGameOver = false;
         messageElement.style.display = 'none';
-        
-        // Feet start shuffling[cite: 2]
         clearInterval(animInterval);
         animInterval = setInterval(updateAnimation, 150);
-
-        document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+        document.querySelectorAll('.obstacle, .decoration').forEach(el => el.remove());
         gameLoop();
         scheduleObstacle();
+        scheduleDecoration();
     }
 
     function gameOver() {
         isGameOver = true;
         clearInterval(animInterval);
-        player.style.backgroundImage = "url('standing_1.png')";
-        cancelAnimationFrame(gameLoopInterval);
         clearTimeout(obstacleTimer);
-        messageElement.innerHTML = `<h2>GAME OVER</h2><p>Final Score: ${Math.floor(score/10)}</p><button onclick="startGame()">Play Again</button>`;
+        clearTimeout(decorTimer);
+        player.style.backgroundImage = "url('standing_1.png')";
+        
+        // Fun theme-based game over messages
+        const insults = ["Budget Overrun!", "Data Discrepancy!", "Out of Bounds!", "Missing Forecast!"];
+        const randomMsg = insults[Math.floor(Math.random() * insults.length)];
+        
+        messageElement.innerHTML = `<h2>${randomMsg}</h2><p>Final Score: ${Math.floor(score/10)}</p><button onclick="startGame()">Try Another Round</button>`;
         messageElement.style.display = 'block';
     }
 
@@ -168,16 +116,16 @@
         scoreElement.innerText = Math.floor(score / 10);
         gameSpeed += 0.001;
         
-        document.querySelectorAll('.obstacle').forEach(obstacle => {
-            let currentLeft = parseInt(obstacle.style.left);
-            obstacle.style.left = (currentLeft - gameSpeed) + 'px';
-            if (currentLeft < -100) obstacle.remove();
+        document.querySelectorAll('.obstacle, .decoration').forEach(el => {
+            let currentLeft = parseInt(el.style.left);
+            el.style.left = (currentLeft - gameSpeed) + 'px';
+            if (currentLeft < -100) el.remove();
         });
 
         const p = player.getBoundingClientRect();
         document.querySelectorAll('.obstacle').forEach(obs => {
             const o = obs.getBoundingClientRect();
-            // Narrowed collision detection for the wider character[cite: 2]
+            // Collision tuning
             if (p.right - 45 > o.left && p.left + 45 < o.right && p.bottom > o.top + 10) {
                 gameOver();
             }
@@ -189,10 +137,29 @@
         if (isGameOver) return;
         const obstacle = document.createElement('div');
         obstacle.classList.add('obstacle');
-        Math.random() > 0.5 ? obstacle.classList.add('sand-trap') : obstacle.classList.add('golf-cart');
+        
+        if(Math.random() > 0.5) {
+            obstacle.classList.add('finance-error');
+            obstacle.innerText = Math.random() > 0.5 ? "DATA ERROR" : "LATE REPORT";
+        } else {
+            obstacle.classList.add('golf-flag');
+        }
+        
         obstacle.style.left = '850px';
         container.appendChild(obstacle);
         obstacleTimer = setTimeout(scheduleObstacle, 1200 + Math.random() * 2000);
+    }
+
+    // Purely visual golf tees/grass to make it feel more like a course
+    function scheduleDecoration() {
+        if (isGameOver) return;
+        const decor = document.createElement('div');
+        decor.classList.add('decoration');
+        decor.innerText = '📍'; // Looks like a golf tee
+        decor.style.left = '850px';
+        decor.style.bottom = (Math.random() * 20) + 'px';
+        container.appendChild(decor);
+        decorTimer = setTimeout(scheduleDecoration, 500 + Math.random() * 1000);
     }
 </script>
 </body>
