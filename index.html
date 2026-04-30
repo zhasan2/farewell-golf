@@ -11,18 +11,18 @@
         #message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #333; z-index: 20; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; border: 2px solid #558b2f; }
         button { padding: 10px 20px; font-size: 18px; cursor: pointer; background-color: #333; color: white; border: none; border-radius: 4px; }
 
-        /* THE FIX: Correcting the spritesheet window */
+        /* THE UPDATED FIX */
         #player {
             width: 80px; 
-            height: 80px; 
+            height: 90px; /* Slightly taller to ensure feet aren't clipped */
             position: absolute; 
             bottom: 0px; 
             left: 50px;
             background-image: url('character.png');
             background-repeat: no-repeat;
-            /* background-color: white;  <- Removed white background for better look */
+            background-color: #ffffff; /* Matches the white in your image */
             
-            /* 3 columns wide, 2 rows tall */
+            /* Keep 300% width, 200% height for the 3x2 grid logic */
             background-size: 300% 200%; 
             
             z-index: 5;
@@ -30,17 +30,17 @@
             animation: runCycle 0.4s steps(1) infinite;
         }
 
-        /* JUMP POSE: The bottom character is at 0% horizontal, 100% vertical */
+        /* JUMP POSE: Shifted slightly left (5%) to center the jumping guy */
         #player.jumping-pose {
             animation: none;
-            background-position: 0% 100%; 
+            background-position: 5% 100%; 
         }
 
-        /* RUN CYCLE: Switches between the 2nd and 3rd character in the top row */
+        /* RUN CYCLE: Adjusted to 45% and 95% to prevent "edge cutting" */
         @keyframes runCycle {
-            0% { background-position: 50% 0%; }   /* Middle character */
-            50% { background-position: 100% 0%; } /* Right character */
-            100% { background-position: 50% 0%; }
+            0% { background-position: 45% 0%; }   /* Frame 1: Mid-run */
+            50% { background-position: 95% 0%; }  /* Frame 2: Extension */
+            100% { background-position: 45% 0%; }
         }
 
         .obstacle { position: absolute; bottom: 0; z-index: 4; }
