@@ -11,7 +11,7 @@
         #message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #333; z-index: 20; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; border: 2px solid #558b2f; }
         button { padding: 10px 20px; font-size: 18px; cursor: pointer; background-color: #333; color: white; border: none; border-radius: 4px; }
 
-        /* CHARACTER SETTINGS: Calibrated for 400px zoom */
+        /* THE FIX: Using percentages to force the full body into view */
         #player {
             width: 80px; 
             height: 80px; 
@@ -22,25 +22,25 @@
             background-repeat: no-repeat;
             background-color: white; 
             
-            /* Scaling to 400px shrinks him enough to see legs */
-            background-size: 400px 400px; 
+            /* This tells the image: "Stretch so the whole 2x2 grid is 300% the width of the box" */
+            background-size: 300% 200%; 
             
             z-index: 5;
             transition: bottom 0.3s ease-out;
             animation: runCycle 0.4s steps(1) infinite;
         }
 
-        /* JUMP POSE: Shifted to bottom-left frame at 400px scale */
+        /* JUMP POSE: Shift to the bottom row (100% vertical) */
         #player.jumping-pose {
             animation: none;
-            background-position: -12px -215px; 
+            background-position: 0% 100%; 
         }
 
-        /* RUN CYCLE: Shifted to top-right frames at 400px scale */
+        /* RUN CYCLE: Switch between the top-center and top-right characters */
         @keyframes runCycle {
-            0% { background-position: -135px -15px; }
-            50% { background-position: -260px -15px; }
-            100% { background-position: -135px -15px; }
+            0% { background-position: 50% 0%; }
+            50% { background-position: 100% 0%; }
+            100% { background-position: 50% 0%; }
         }
 
         .obstacle { position: absolute; bottom: 0; z-index: 4; }
